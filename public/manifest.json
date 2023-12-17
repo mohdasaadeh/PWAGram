@@ -2,6 +2,7 @@
   "name": "Instagram clone application",
   "short_name": "PWAGram",
   "start_url": "/index.html",
+  "scope": ".",
   "display": "standalone",
   "orientation": "portrait-primary",
   "background_color": "#fff",

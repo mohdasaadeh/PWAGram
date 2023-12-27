@@ -83,7 +83,11 @@ self.addEventListener("fetch", (event) => {
             })
             .catch((error) => {
               return caches.open(CACHE_STATIC).then((cache) => {
-                return cache.match("/offline.html");
+                // This fallback page is only when the help page isn't found, because it's non sense to show
+                // this fallbakc on any failed request.
+                if (event.request.url.includes("/help")) {
+                  return cache.match("/offline.html");
+                }
               });
             });
         }

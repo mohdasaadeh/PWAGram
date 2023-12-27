@@ -90,18 +90,18 @@ fetch(url)
   });
 
 if ("caches" in window) {
-  caches.open("dynamic").then((cache) => {
-    cache
-      .match(url)
-      .then((matchedUrl) => {
-        if (matchedUrl) {
-          return matchedUrl.json();
-        }
-      })
-      .then((data) => {
+  caches
+    .match(url)
+    .then((matchedUrl) => {
+      if (matchedUrl) {
+        return matchedUrl.json();
+      }
+    })
+    .then((data) => {
+      if (!isRequestReceived) {
         clearCards();
 
         createCard();
-      });
-  });
+      }
+    });
 }

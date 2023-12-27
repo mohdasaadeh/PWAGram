@@ -67,10 +67,41 @@ function createCard() {
   sharedMomentsArea.appendChild(cardWrapper);
 }
 
-fetch("https://httpbin.org/get")
+function clearCards() {
+  if (sharedMomentsArea.hasChildNodes) {
+    sharedMomentsArea.innerHTML = "";
+  }
+}
+
+let isRequestReceived = false;
+
+const url = "https://httpbin.org/get";
+
+fetch(url)
   .then(function (res) {
     return res.json();
   })
   .then(function (data) {
+    isRequestReceived = true;
+
+    clearCards();
+
     createCard();
   });
+
+if ("caches" in window) {
+  caches.open("dynamic").then((cache) => {
+    cache
+      .match(url)
+      .then((matchedUrl) => {
+        if (matchedUrl) {
+          return matchedUrl.json();
+        }
+      })
+      .then((data) => {
+        clearCards();
+
+        createCard();
+      });
+  });
+}

@@ -1,4 +1,4 @@
-const CACHE_STATIC = "static-v8";
+const CACHE_STATIC = "static-v10";
 const CACHE_DYNAMIC = "dynamic";
 
 self.addEventListener("install", (event) => {
@@ -48,32 +48,46 @@ self.addEventListener("activate", (event) => {
   );
 });
 
-self.addEventListener("fetch", (event) => {
-  event.respondWith(
-    caches.match(event.request).then((response) => {
-      if (response) {
-        return response;
-      } else {
-        return fetch(event.request)
-          .then((res) => {
-            return caches.open(CACHE_DYNAMIC).then(async (cache) => {
-              // This matching is to make sure that the key doens't exist in the static cache
-              // so the dynamic cache doesn't overwrite it.
-              await caches.match(event.request).then((staticMatch) => {
-                if (!staticMatch) {
-                  cache.put(event.request.url, res.clone());
-                }
-              });
+const url = "https://httpbin.org/get";
 
-              return res;
+self.addEventListener("fetch", (event) => {
+  if (event.request.url.includes("https://httpbin.org/get")) {
+    event.respondWith(
+      fetch(event.request).then((response) => {
+        return caches.open(CACHE_DYNAMIC).then((cache) => {
+          cache.put(url, response.clone());
+
+          return response;
+        });
+      })
+    );
+  } else {
+    event.respondWith(
+      caches.match(event.request).then((response) => {
+        if (response) {
+          return response;
+        } else {
+          return fetch(event.request)
+            .then((res) => {
+              return caches.open(CACHE_DYNAMIC).then(async (cache) => {
+                // This matching is to make sure that the key doens't exist in the static cache
+                // so the dynamic cache doesn't overwrite it.
+                await caches.match(event.request).then((staticMatch) => {
+                  if (!staticMatch) {
+                    cache.put(event.request.url, res.clone());
+                  }
+                });
+
+                return res;
+              });
+            })
+            .catch((error) => {
+              return caches.open(CACHE_STATIC).then((cache) => {
+                return cache.match("/offline.html");
+              });
             });
-          })
-          .catch((error) => {
-            return caches.open(CACHE_STATIC).then((cache) => {
-              return cache.match("/offline.html");
-            });
-          });
-      }
-    })
-  );
+        }
+      })
+    );
+  }
 });

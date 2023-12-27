@@ -1,4 +1,4 @@
-const CACHE_STATIC = "static-v2";
+const CACHE_STATIC = "static-v5";
 const CACHE_DYNAMIC = "dynamic";
 
 self.addEventListener("install", (event) => {

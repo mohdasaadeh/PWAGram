@@ -1,6 +1,18 @@
 const CACHE_STATIC = "static-v10";
 const CACHE_DYNAMIC = "dynamic";
 
+function trimCache(cacheName, maxItems) {
+  caches.open(cacheName).then((cache) => {
+    cache.keys().then((keys) => {
+      if (keys.length > maxItems) {
+        cache.delete(keys[0]).then((isDeleted) => {
+          trimCache(cacheName, maxItems);
+        });
+      }
+    });
+  });
+}
+
 self.addEventListener("install", (event) => {
   console.log("The service worker has been installed successfully!", event);
 
@@ -55,6 +67,8 @@ self.addEventListener("fetch", (event) => {
     event.respondWith(
       fetch(event.request).then((response) => {
         return caches.open(CACHE_DYNAMIC).then((cache) => {
+          trimCache(CACHE_DYNAMIC, 3);
+
           cache.put(url, response.clone());
 
           return response;
@@ -74,6 +88,8 @@ self.addEventListener("fetch", (event) => {
                 // so the dynamic cache doesn't overwrite it.
                 await caches.match(event.request).then((staticMatch) => {
                   if (!staticMatch) {
+                    trimCache(CACHE_DYNAMIC, 3);
+
                     cache.put(event.request.url, res.clone());
                   }
                 });

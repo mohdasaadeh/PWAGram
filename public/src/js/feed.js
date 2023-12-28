@@ -32,31 +32,31 @@ shareImageButton.addEventListener("click", openCreatePostModal);
 closeCreatePostModalButton.addEventListener("click", closeCreatePostModal);
 
 function onSaveButtonClicked() {
-  if ("caches" in window) {
-    caches.open("user-requested").then((cache) => {
-      cache.add("https://httpbin.org/get");
-    });
-  }
+  // if ("caches" in window) {
+  //   caches.open("user-requested").then((cache) => {
+  //     cache.add("https://httpbin.org/get");
+  //   });
+  // }
 }
 
-function createCard() {
+function createCard(post) {
   var cardWrapper = document.createElement("div");
   cardWrapper.className = "shared-moment-card mdl-card mdl-shadow--2dp";
   cardWrapper.style.margin = "0 auto";
   var cardTitle = document.createElement("div");
   cardTitle.className = "mdl-card__title";
-  cardTitle.style.backgroundImage = 'url("/src/images/sf-boat.jpg")';
+  cardTitle.style.backgroundImage = `url(${post.image})`;
   cardTitle.style.backgroundSize = "cover";
   cardTitle.style.height = "180px";
   cardWrapper.appendChild(cardTitle);
   var cardTitleTextElement = document.createElement("h2");
   cardTitleTextElement.style.color = "white";
   cardTitleTextElement.className = "mdl-card__title-text";
-  cardTitleTextElement.textContent = "San Francisco Trip";
+  cardTitleTextElement.textContent = post.title;
   cardTitle.appendChild(cardTitleTextElement);
   var cardSupportingText = document.createElement("div");
   cardSupportingText.className = "mdl-card__supporting-text";
-  cardSupportingText.textContent = "In San Francisco";
+  cardSupportingText.textContent = post.location;
   cardSupportingText.style.textAlign = "center";
   var cardSaveButton = document.createElement("button");
   cardSaveButton.textContent = "Save";
@@ -75,7 +75,8 @@ function clearCards() {
 
 let isRequestReceived = false;
 
-const url = "https://httpbin.org/get";
+const url =
+  "https://firestore.googleapis.com/v1/projects/pwagram-3a1b1/databases/(default)/documents/posts";
 
 fetch(url)
   .then(function (res) {
@@ -86,22 +87,26 @@ fetch(url)
 
     clearCards();
 
-    createCard();
+    const posts = data.documents.map((doc) => {
+      return {
+        id: doc.fields.id.stringValue,
+        title: doc.fields.title.stringValue,
+        image: doc.fields.image.stringValue,
+        location: doc.fields.location.stringValue,
+      };
+    });
+
+    for (const post of posts) {
+      createCard(post);
+    }
   });
 
-if ("caches" in window) {
-  caches
-    .match(url)
-    .then((matchedUrl) => {
-      if (matchedUrl) {
-        return matchedUrl.json();
-      }
-    })
-    .then((data) => {
-      if (!isRequestReceived) {
-        clearCards();
+readAllData("posts").then((posts) => {
+  if (!isRequestReceived) {
+    clearCards();
 
-        createCard();
-      }
-    });
-}
+    for (const post of posts) {
+      createCard(post);
+    }
+  }
+});

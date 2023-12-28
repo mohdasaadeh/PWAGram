@@ -1,4 +1,7 @@
-const CACHE_STATIC = "static-v10";
+importScripts("https://cdn.jsdelivr.net/npm/idb@8/build/umd.js");
+importScripts("/src/js/utility.js");
+
+const CACHE_STATIC = "static-v12";
 const CACHE_DYNAMIC = "dynamic";
 
 function trimCache(cacheName, maxItems) {
@@ -26,9 +29,11 @@ self.addEventListener("install", (event) => {
           "/help/",
           "/help/index.html",
           "/offline.html",
+          "/src/js/material.min.js",
+          "/src/js/idb.js",
+          "/src/js/utility.js",
           "/src/js/app.js",
           "/src/js/feed.js",
-          "/src/js/material.min.js",
           "/src/css/app.css",
           "/src/css/feed.css",
           "/src/css/help.css",
@@ -60,19 +65,31 @@ self.addEventListener("activate", (event) => {
   );
 });
 
-const url = "https://httpbin.org/get";
+const url =
+  "https://firestore.googleapis.com/v1/projects/pwagram-3a1b1/databases/(default)/documents/posts";
 
 self.addEventListener("fetch", (event) => {
-  if (event.request.url.includes("https://httpbin.org/get")) {
+  if (event.request.url.includes(url)) {
     event.respondWith(
       fetch(event.request).then((response) => {
-        return caches.open(CACHE_DYNAMIC).then((cache) => {
-          trimCache(CACHE_DYNAMIC, 3);
+        const clonedResponse = response.clone();
 
-          cache.put(url, response.clone());
+        clonedResponse.json().then((data) => {
+          const posts = data.documents.map((doc) => {
+            return {
+              id: doc.fields.id.stringValue,
+              title: doc.fields.title.stringValue,
+              image: doc.fields.image.stringValue,
+              location: doc.fields.location.stringValue,
+            };
+          });
 
-          return response;
+          for (const post of posts) {
+            writeData("posts", post);
+          }
         });
+
+        return response;
       })
     );
   } else {
@@ -88,7 +105,7 @@ self.addEventListener("fetch", (event) => {
                 // so the dynamic cache doesn't overwrite it.
                 await caches.match(event.request).then((staticMatch) => {
                   if (!staticMatch) {
-                    trimCache(CACHE_DYNAMIC, 3);
+                    // trimCache(CACHE_DYNAMIC, 3);
 
                     cache.put(event.request.url, res.clone());
                   }

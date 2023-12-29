@@ -128,3 +128,48 @@ self.addEventListener("fetch", (event) => {
     );
   }
 });
+
+self.addEventListener("sync", function (event) {
+  console.log("[Service Worker] Background syncing", event);
+  if (event.tag === "sync-new-posts") {
+    console.log("[Service Worker] Syncing new Posts");
+    event.waitUntil(
+      readAllData("sync-posts").then(function (data) {
+        for (var dt of data) {
+          fetch(
+            "https://firestore.googleapis.com/v1/projects/pwagram-3a1b1/databases/(default)/documents/posts",
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                Accept: "application/json",
+              },
+              body: JSON.stringify({
+                id: dt.id,
+                title: dt.title,
+                location: dt.location,
+                image:
+                  "https://firebasestorage.googleapis.com/v0/b/pwagram-3a1b1.appspot.com/o/sf-boat.jpg?alt=media&token=527ae467-a938-493b-a205-4fd4c70b4d6e",
+              }),
+            }
+          )
+            .then(function (res) {
+              // This always returns an error because there is a problem with the endpoint since
+              // I cannot do a post request to it so the items will never get deleted.
+              console.log("Sent data", res);
+              if (res.ok) {
+                deleteItemFromData("sync-posts", dt.id);
+                // This is commented because firebase functions didn't work since it requires BLAZE plan
+                // res.json().then(function (resData) {
+                //   deleteItemFromData("sync-posts", resData.id);
+                // });
+              }
+            })
+            .catch(function (err) {
+              console.log("Error while sending data", err);
+            });
+        }
+      })
+    );
+  }
+});

@@ -3,7 +3,7 @@ const enableNotificationsButtons = document.querySelectorAll(
 );
 
 if ("serviceWorker" in navigator) {
-  navigator.serviceWorker.register("/sw.js").then((event) => {
+  navigator.serviceWorker.register("/service-worker.js").then((event) => {
     console.log("The service worker has been registered successfully!", event);
   });
 }

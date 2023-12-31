@@ -8,7 +8,7 @@
   top: 56px;
   background: white;
   text-align: center;
-  display: none;
+  transform: translateY(100vh);
 }
 
 .main-image {
@@ -28,4 +28,8 @@
 .input-section {
   display: block;
   margin: 10px auto;
+}
+
+#pick-image {
+  display: none;
 }
